@@ -3,7 +3,8 @@
 var res = {
     background_png: 'res/background.png',
     marios_way_mp3: 'res/marios_way.mp3',
-    pipe_png: 'res/pipe.png'
+    pipe_png: 'res/pipe.png',
+    bird_png: 'res/bird.png'
 };
 
 var g_mainmenu = [

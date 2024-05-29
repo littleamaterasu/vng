@@ -18,7 +18,7 @@ var PipeLayer = cc.Layer.extend({
     ctor: function () {
         this._super();
         this.pipes = [];
-        this.schedule(this.addPipe, 0.75 * speed);
+        this.schedule(this.addPipe, 0.25 * speed);
         this.scheduleUpdate();
     },
     addPipe: function () {
