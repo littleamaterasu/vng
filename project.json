@@ -9,6 +9,7 @@
     "modules" : ["cocos2d"],
 
     "jsList" : [
+        "src/Pipe.js",
         "src/MaingameScene.js",
         "src/MenuScene.js",
         "src/Resource.js"

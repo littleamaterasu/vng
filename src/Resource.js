@@ -15,4 +15,4 @@ var g_maingame = [
     res.pipe_png
 ];
 
-var speed = 2;
+var speed = 4;

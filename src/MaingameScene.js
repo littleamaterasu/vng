@@ -4,13 +4,15 @@ var MaingameLayer = cc.Layer.extend({
 
         var size = cc.winSize;
 
+        var pipeLayer = new PipeLayer();
+        this.addChild(pipeLayer, 1)
 
         // Tạo hai sprite background
         this.backgroundSprite1 = new cc.Sprite(res.background_png);
         this.backgroundSprite1.attr({
             x: size.width / 2,
             y: size.height / 2,
-            scale: 1.0
+            scale: 2.0
         });
         this.addChild(this.backgroundSprite1, 0);
 
@@ -18,7 +20,7 @@ var MaingameLayer = cc.Layer.extend({
         this.backgroundSprite2.attr({
             x: size.width / 2 + this.backgroundSprite1.width,
             y: size.height / 2,
-            scale: 1.0
+            scale: 2.0
         });
         this.addChild(this.backgroundSprite2, 0);
 
@@ -41,8 +43,6 @@ var MaingameLayer = cc.Layer.extend({
     },
 
     moveBackground: function(dt) {
-        var speed = 2;
-
         this.backgroundSprite1.x -= speed;
         this.backgroundSprite2.x -= speed;
 
