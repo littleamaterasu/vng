@@ -4,6 +4,7 @@ var MaingameLayer = cc.Layer.extend({
 
         var size = cc.winSize;
 
+
         // Tạo hai sprite background
         this.backgroundSprite1 = new cc.Sprite(res.background_png);
         this.backgroundSprite1.attr({
