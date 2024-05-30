@@ -6,8 +6,7 @@ var Bird = cc.Sprite.extend({
         this.jumpStrength = 4;
         this.state = "FLYING_STRAIGHT";
         this.t = 0;
-        this.drawNode = new cc.DrawNode();
-        this.addChild(this.drawNode);
+
         var size = cc.winSize;
         this.attr({
             x: size.width / 2,
@@ -50,7 +49,7 @@ var Bird = cc.Sprite.extend({
             this.y = cc.winSize.height;
         }
 
-        this.drawBoundingBox();
+
     },
 
     jump: function() {
@@ -66,16 +65,11 @@ var Bird = cc.Sprite.extend({
     getBoundingBox: function() {
         var rect = this._super();
 
-        rect.width -= 5;
-        rect.height -= 5;
+        rect.width -= 2;
+        rect.height -= 2;
 
-        rect.x += 10;
+        rect.x += 1;
+        rect.y += 1;
         return rect;
-    },
-
-    drawBoundingBox: function() {
-        var boundingBox = this.getBoundingBox();
-        this.drawNode.clear();
-        this.drawNode.drawRect(cc.p(boundingBox.x, 0), cc.p(boundingBox.width, boundingBox.height), null, 1, cc.color(255, 0, 0, 255));
     },
 });

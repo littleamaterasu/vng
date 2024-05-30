@@ -26,7 +26,7 @@ var PipeLayer = cc.Layer.extend({
         var pipe = new Pipe();
         var reversePipe = new ReversePipe();
 
-        var yPos = Math.random() * size.height / 4;
+        var yPos = Math.random() * size.height / 3;
         var gap = size.height / 4;
 
         pipe.attr({
@@ -44,6 +44,19 @@ var PipeLayer = cc.Layer.extend({
         this.pipes.push(pipe);
         this.pipes.push(reversePipe);
     },
+
+    getBoundingBox: function() {
+        var rect = this._super();
+
+        rect.width -= 2;
+        rect.height -= 2;
+
+        rect.x += 1;
+        rect.y += 1;
+
+        return rect;
+    },
+
     update: function (dt) {
         for (var i = this.pipes.length - 1; i >= 0; --i) {
             var pipe = this.pipes[i];

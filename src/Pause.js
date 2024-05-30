@@ -1,14 +1,11 @@
 var PauseLayer = cc.Layer.extend({
-    ctor: function() {
+    ctor: function(lost) {
         this._super();
+        this.lost = lost;
 
         var size = cc.winSize;
 
-        var label = new cc.LabelTTF("Paused", "Arial", 38);
-        label.setPosition(size.width / 2, size.height / 2 + 50);
-        this.addChild(label);
-
-        var resumeButton = new cc.MenuItemFont("Resume", this.resumeGame, this);
+        var resumeButton = new cc.MenuItemFont(this.lost ? "Retry" : "Resume", this.resumeGame, this);
         resumeButton.setPosition(size.width / 2, size.height / 2);
 
         var menu = new cc.Menu(resumeButton);
@@ -27,8 +24,17 @@ var PauseLayer = cc.Layer.extend({
     },
 
     resumeGame: function() {
-        cc.audioEngine.resumeMusic();
         cc.director.resume();
+
+        if(this.lost) {
+            cc.director.resume();
+            cc.LoaderScene.preload(g_maingame, function() {
+                cc.director.runScene(new MaingameScene());
+            }, this);
+            return;
+        }
+
+        cc.audioEngine.resumeMusic();
         this.removeFromParent();
     },
 
