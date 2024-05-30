@@ -2,10 +2,13 @@ var Bird = cc.Sprite.extend({
     ctor: function() {
         this._super(res.bird_png);
         this.ySpeed = 0;
-        this.gravity = gravity;
-        this.jumpStrength = 4;
+        this.gravity = GRAVITY;
+        this.jumpStrength = JUMP_STRENGTH;
         this.state = "FLYING_STRAIGHT";
         this.angle = 0;
+        this.radius = this.height / 2;
+        this.cooldown1 = 0;
+        this.cooldown2 = 0;
 
         var size = cc.winSize;
         this.attr({
@@ -22,25 +25,23 @@ var Bird = cc.Sprite.extend({
             case "FLYING_STRAIGHT":
                 break;
             case "JUMPING":
-                this.ySpeed = 2 * this.jumpStrength;
-                this.angle = -45;
+                this.ySpeed = this.jumpStrength;
+                this.angle = MAX_UP_ANGLE;
                 this.setRotation(this.angle);
                 this.state = "FALLING";
                 break;
             case "FALLING":
-                this.ySpeed += 2 * this.gravity * dt;
-                this.angle = Math.min(90, this.angle + 135 * dt);
+
+                this.ySpeed += this.gravity * dt;
+                this.angle = Math.min(MAX_DOWN_ANGLE, this.angle + TURN_RATE * dt);
                 this.setRotation(this.angle)
                 break;
             case "DEAD":
                 this.ySpeed = 0;
                 break;
-            /*
             case "SKILL1":
+                this.ySpeed = 0;
                 break;
-            case "SKILL2":
-                break;
-            */
         }
 
         this.y += this.ySpeed;
@@ -52,8 +53,6 @@ var Bird = cc.Sprite.extend({
         if (this.y > cc.winSize.height) {
             this.y = cc.winSize.height;
         }
-
-
     },
 
     jump: function() {
@@ -66,6 +65,11 @@ var Bird = cc.Sprite.extend({
         this.state = "DEAD";
     },
 
+    skill1: function () {
+        this.state = "SKILL1";
+        this.cooldown1 = COOLDOWN_SKILL_1;
+    },
+
     getBoundingBox: function() {
         var rect = this._super();
 
@@ -74,6 +78,7 @@ var Bird = cc.Sprite.extend({
 
         rect.x += 1;
         rect.y += 1;
+
         return rect;
     },
 });

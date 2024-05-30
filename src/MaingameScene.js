@@ -1,9 +1,14 @@
 var MaingameLayer = cc.Layer.extend({
     ctor: function() {
         this._super();
+
         this.drawNode = new cc.DrawNode();
         this.addChild(this.drawNode, 10);
+
+        this.speed = BASE_SPEED;
+
         var size = cc.winSize;
+
 // Thêm background
         this.backgroundSprite1 = new cc.Sprite(res.background_png);
         this.backgroundSprite1.attr({
@@ -53,7 +58,7 @@ var MaingameLayer = cc.Layer.extend({
         cc.audioEngine.playMusic(res.marios_way_mp3, true);
 
 // Thêm PipeLayer
-        this.pipeLayer = new PipeLayer();
+        this.pipeLayer = new PipeLayer(this.speed);
         this.addChild(this.pipeLayer, 1);
 
 // Thêm chim
@@ -73,49 +78,88 @@ var MaingameLayer = cc.Layer.extend({
 // Thêm Countdown
         this.countdown = 5;
 
-        this.countdownLabel = new cc.LabelTTF("5", res.flappy_ttf, 48);
+        this.countdownLabel = new ccui.Text("5", res.flappy_ttf, 48);
         this.countdownLabel.setPosition(size.width / 2, size.height / 4 * 3);
         this.addChild(this.countdownLabel, 10);
         this.schedule(this.updateCountdown, 1, this.countdown, 1);
+
+        this.cooldownLabel = new ccui.Text("Skill 1: OK", res.flappy_ttf, 48);
+        this.cooldownLabel.setPosition(size.width / 3, size.height / 7 * 6);
+        this.addChild(this.cooldownLabel, 10);
 
         this.scheduleUpdate();
 
         return true;
     },
 
+// Hiện cooldown
+
+
 // Hàm cho Listener
     onKeyPressed: function(keyCode, event) {
-        if (keyCode === cc.KEY.space) {
-            this.bird.jump();
+        switch (keyCode){
+            case cc.KEY.space:
+                if(this.bird.state === "JUMPING" || this.bird.state === "FLYING_STRAIGHT" || this.bird.state === "FALLING") this.bird.jump();
+                break;
+            case cc.KEY.z:
+                if(this.bird.cooldown1 <= 0){
+                    this.setAllSpeed(this.speed * DASH_AMPLIFY);
+                    this.cooldownLabel.setString("Skill 1: " + COOLDOWN_SKILL_1.toString());
+                    this.schedule(this.updateCooldown, 1, COOLDOWN_SKILL_1 + 1 , 0);
+                    this.bird.skill1();
+                    setTimeout(() => this.setAllSpeed(BASE_SPEED),DASH_DURATION);
+                }
+                break;
         }
+    },
+
+    setAllSpeed: function (speed) {
+        this.speed = speed;
+        this.pipeLayer.setPipeSpeed(this.speed);
+        this.bird.state = "FALLING";
+    },
+
+// Tìm vị trí gần hình tròn nhất
+    checkIndividualCollision: function (c, r, radius){
+        var Y = Math.min(Math.max(c.y, r.y), r.y + r.height);
+        var X = Math.min(Math.max(c.x, r.x), r.x + r.width);
+
+        var dX = c.x - X;
+        var dY = c.y - Y;
+
+        if(dX * dX + dY * dY <= radius * radius) return true;
+
+        return false;
     },
 
 // Collision là các hình chữ nhật
     checkCollisions: function() {
-//        if(cc.rectIntersectsRect(this.bird.getBoundingBox(), this.ground1.getBoundingBox())
-//            || cc.rectIntersectsRect(this.bird.getBoundingBox(), this.ground2.getBoundingBox())){
-//                this.bird.die();
-//                this.pauseGame(true);
-//                this.writeScore();
-//                return;
-//            }
-//
-//        for (var i = 0; i < 6; i += 2) {
-//            var pipe = this.pipeLayer.pipes[i];
-//            if (pipe && cc.rectIntersectsRect(this.bird.getBoundingBox(), pipe.getBoundingBox())) {
-//                this.bird.die();
-//                this.pauseGame(true);
-//                this.writeScore();
-//                break;
-//            }
-//            pipe = this.pipeLayer.pipes[i + 1];
-//            if (pipe && cc.rectIntersectsRect(this.bird.getBoundingBox(), pipe.getBoundingBox())) {
-//                this.bird.die();
-//                this.pauseGame(true);
-//                this.writeScore();
-//                break;
-//            }
-//        }
+        if(this.bird.state === "SKILL2" || this.bird.state === "SKILL1") return;
+
+        if(this.checkIndividualCollision(this.bird.getPosition(), this.ground1.getBoundingBox(), this.bird.radius)
+           || this.checkIndividualCollision(this.bird.getPosition(), this.ground2.getBoundingBox(), this.bird.radius)){
+               this.bird.die();
+               this.pauseGame(true);
+               this.writeScore();
+               return;
+           }
+
+        for (var i = 0; i < 10; i += 2) {
+           var pipe = this.pipeLayer.pipes[i];
+           if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
+               this.bird.die();
+               this.pauseGame(true);
+               this.writeScore();
+               break;
+           }
+           pipe = this.pipeLayer.pipes[i + 1];
+           if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
+               this.bird.die();
+               this.pauseGame(true);
+               this.writeScore();
+               break;
+           }
+       }
     },
 
 // Kiểm tra điểm
@@ -133,14 +177,14 @@ var MaingameLayer = cc.Layer.extend({
 // Pause
     pauseGame: function(lost) {
 
-        if(this.getChildByTag('paused') !== null){
+        if(this.getChildByTag(1) !== null){
             return;
         }
 
         cc.audioEngine.pauseMusic();
         cc.director.pause();
         var pauseLayer = new PauseLayer(lost);
-        pauseLayer.setTag('paused');
+        pauseLayer.setTag(1);
         this.addChild(pauseLayer, 4);
     },
 
@@ -149,10 +193,21 @@ var MaingameLayer = cc.Layer.extend({
         this.countdown--;
         this.countdownLabel.setString(this.countdown.toString());
 
-        if (this.countdown <= 0 || this.bird.state !== "FLYING_STRAIGHT") {
+        if (this.countdown <= 0) {
             if(this.bird.state === "FLYING_STRAIGHT") this.bird.state = "FALLING";
             this.countdownLabel.setString("");
             this.unschedule(this.updateCountdown);
+        }
+    },
+
+// Cooldown
+    updateCooldown: function () {
+
+        this.bird.cooldown1 = Math.max(0, this.bird.cooldown1 - 1);
+        this.cooldownLabel.setString("Skill 1: " + (this.bird.cooldown1).toString());
+        if(this.bird.cooldown1 <= 0){
+            this.cooldownLabel.setString("Skill 1: OK");
+            this.unschedule(this.updateCooldown);
         }
     },
 
@@ -181,26 +236,44 @@ var MaingameLayer = cc.Layer.extend({
         }
 
     },
-// Vẽ Bounding chim
-//    drawBoundingBox: function() {
-//        var boundingBox = this.bird.getBoundingBox();
-//        this.drawNode.clear();
-//        this.drawNode.drawRect(cc.p(boundingBox.x, boundingBox.y), cc.p(boundingBox.x + boundingBox.width, boundingBox.y + boundingBox.height), null, 1, cc.color(255, 0, 0, 255));
-//    },
+// Vẽ Bounding
+   drawBoundingBox: function() {
+        this.drawNode.clear();
+        this.pipeLayer.pipes.forEach(pipe => {
+            this.drawNode.drawRect(
+                cc.p(pipe.getBoundingBox().x,
+                pipe.getBoundingBox().y),
+                cc.p(pipe.width + pipe.getBoundingBox().x,
+                    pipe.height + pipe.getBoundingBox().y),
+                null,
+                1,
+                cc.color(255, 0, 0, 255))
+        })
+
+       this.drawNode.drawCircle(
+           this.bird.getPosition(),
+           15.5,
+           0,
+           50,
+           false,
+           1,
+           cc.color(255, 0, 0, 255))
+   },
+
 // Update kiểm tra Điểm và Va chạm, di chuyển background
     update: function(dt) {
-//        this.drawBoundingBox();
+       // this.drawBoundingBox();
 
-        if(this.getChildByTag('paused') !== null) return;
+        if(this.getChildByTag(1) !== null) return;
 
-        this.checkCollisions();
+        // this.checkCollisions();
         this.checkScore();
 
-        this.backgroundSprite1.x -= speed / 2 * dt;
-        this.backgroundSprite2.x -= speed / 2 * dt;
+        this.backgroundSprite1.x -= this.speed / 2 * dt;
+        this.backgroundSprite2.x -= this.speed / 2 * dt;
 
-        this.ground1.x -= speed * dt;
-        this.ground2.x -= speed * dt;
+        this.ground1.x -= this.speed * dt;
+        this.ground2.x -= this.speed * dt;
 
         if (this.backgroundSprite1.x <= -this.backgroundSprite1.width / 2) {
             this.backgroundSprite1.x = this.backgroundSprite2.x + this.backgroundSprite2.width;
@@ -228,9 +301,4 @@ var MaingameScene = cc.Scene.extend({
     }
 });
 
-cc.game.onStart = function() {
-    cc.LoaderScene.preload(g_maingame, function() {
-        cc.director.runScene(new MaingameScene());
-    }, this);
-};
-cc.game.run();
+

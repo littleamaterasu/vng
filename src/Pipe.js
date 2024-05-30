@@ -15,31 +15,32 @@ var ReversePipe = Pipe.extend({
 });
 
 var PipeLayer = cc.Layer.extend({
-    ctor: function () {
+    ctor: function (pipeSpeed) {
         this._super();
         this.pipes = [];
+        this.pipeSpeed = pipeSpeed;
+
         this.scheduleUpdate();
         this.addPipe();
     },
     addPipe: function () {
-        var size = cc.winSize;
+        const size = cc.winSize;
         var pipeTmp = new Pipe();
-        var reversePipeTmp = new ReversePipe();
-        var interval = (size.width - pipeTmp.width * 4) / 4 + pipeTmp.width;
-        var gap = size.height / 4;
-        console.log(interval)
-        for(var i = 0; i < 5; ++i){
+        const interval = (size.width - pipeTmp.width * 4) / 4 + pipeTmp.width;
+        const gap = size.height / 4;
+
+        for(var i = 0; i < MAX_PIPES / 2; ++i){
             var pipe = new Pipe();
             var reversePipe = new ReversePipe();
-            var yPos = Math.random() * size.height / 3;
+            const yPos = Math.random() * size.height / 3;
 
             pipe.attr({
-                x: size.width + 1080 + pipe.width / 2 + interval * i,
+                x: size.width + START_GAP + pipe.width / 2 + interval * i,
                 y: yPos
             });
 
             reversePipe.attr({
-                x: size.width + 1080 + reversePipe.width / 2 + interval * i,
+                x: size.width + START_GAP + reversePipe.width / 2 + interval * i,
                 y: yPos + pipe.height + gap
             });
 
@@ -48,44 +49,54 @@ var PipeLayer = cc.Layer.extend({
             this.pipes.push(pipe);
             this.pipes.push(reversePipe);
         }
+    },
 
-        this.pipes.forEach(pipe => {
-            console.log(pipe.getPosition())
-        })
+    setPipeSpeed: function (pipeSpeed) {
+        this.pipeSpeed = pipeSpeed;
     },
 
     getBoundingBox: function() {
         var rect = this._super();
 
-        rect.width -= 2;
-        rect.height -= 2;
+        rect.width -= 4;
+        rect.height -= 4;
 
-        rect.x += 1;
-        rect.y += 1;
+        rect.x += 2;
+        rect.y += 2;
 
         return rect;
     },
 
     update: function (dt) {
-        var size = cc.winSize;
-        var gap = size.height / 4;
+        const size = cc.winSize;
+        const gap = size.height / 4;
 
-        for (var i = 0; i < 10; i += 2) {
+        for (var i = 0; i < MAX_PIPES; i += 2) {
+
             var pipe = this.pipes[i];
             var reversePipe = this.pipes[i + 1];
-            pipe.x -= speed * dt;
-            reversePipe.x -= speed * dt;
+
+            // Di chuyen voi toc do la speed
+            pipe.x -= this.pipeSpeed * dt;
+            reversePipe.x -= this.pipeSpeed * dt;
+
             if (pipe.x < -pipe.width / 2) {
-                var interval = (size.width - pipe.width * 4) / 4 + pipe.width;
-                var yPos = Math.random() * size.height / 3;
+
+            // Khoang cach giua 2 cap ong
+                const interval = (size.width - pipe.width * 4) / 4 + pipe.width;
+
+            //
+                const yPos = Math.random() * size.height / 3;
                 pipe.attr({
                     x: size.width + interval - pipe.width / 2,
-                    y: yPos
+                    y: yPos,
+                    scored: false
                 })
 
                 reversePipe.attr({
                     x: size.width + interval - pipe.width / 2,
-                    y: yPos + pipe.height + gap
+                    y: yPos + pipe.height + gap,
+                    scored: false
                 })
             }
         }
