@@ -9,6 +9,9 @@
     "modules" : ["cocos2d"],
 
     "jsList" : [
+        "src/Score.js",
+        "src/Pause.js",
+        "src/Bird.js",
         "src/Pipe.js",
         "src/MaingameScene.js",
         "src/MenuScene.js",

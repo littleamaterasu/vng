@@ -58,7 +58,7 @@ var MenuLayer = cc.Layer.extend({
         });
 
         for (var i = 0; i < scores.length; i++) {
-            var scoreLabel = new cc.LabelTTF(scores[i].name + ": " + scores[i].score, "Arial", 24);
+            var scoreLabel = new cc.LabelTTF(scores[i].score, "Arial", 24);
             scoreLabel.setPosition(size.width / 2, size.height - 100 - i * 30);
             dialog.addChild(scoreLabel);
         }
@@ -83,3 +83,5 @@ var MenuScene = cc.Scene.extend({
         this.addChild(layer);
     }
 });
+
+

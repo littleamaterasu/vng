@@ -3,22 +3,22 @@ var Pipe = cc.Sprite.extend({
     ctor: function () {
         this._super(res.pipe_png);
         this.broken = false;
+        this.scored = false;
     }
 });
 
 var ReversePipe = Pipe.extend({
     ctor: function () {
         this._super();
-        this.setRotation(180); // Rotate the pipe upside down
+        this.setRotation(180);
     }
 });
 
 var PipeLayer = cc.Layer.extend({
-
     ctor: function () {
         this._super();
         this.pipes = [];
-        this.schedule(this.addPipe, 0.25 * speed);
+        this.schedule(this.addPipe, speed / 210);
         this.scheduleUpdate();
     },
     addPipe: function () {
@@ -26,17 +26,16 @@ var PipeLayer = cc.Layer.extend({
         var pipe = new Pipe();
         var reversePipe = new ReversePipe();
 
-        // Random position for the bottom pipe
         var yPos = Math.random() * size.height / 4;
-        var gap = size.height / 4; // Adjust this value for the gap size
+        var gap = size.height / 4;
 
         pipe.attr({
-            x: size.width + pipe.width / 2,
+            x: size.width + 720 + pipe.width / 2,
             y: yPos
         });
 
         reversePipe.attr({
-            x: size.width + reversePipe.width / 2,
+            x: size.width + 720 + reversePipe.width / 2,
             y: yPos + pipe.height + gap
         });
 
@@ -49,11 +48,11 @@ var PipeLayer = cc.Layer.extend({
         for (var i = this.pipes.length - 1; i >= 0; --i) {
             var pipe = this.pipes[i];
 
-            pipe.x -= speed;
+            pipe.x -= speed * dt;
 
             if (pipe.x < -pipe.width / 2) {
                 this.removeChild(pipe);
-                this.pipes.splice(i, 1); // Correctly remove the pipe from the array
+                this.pipes.splice(i, 1);
             }
         }
     }

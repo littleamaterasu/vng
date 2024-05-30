@@ -13,7 +13,9 @@ var g_mainmenu = [
 
 var g_maingame = [
     res.marios_way_mp3,
-    res.pipe_png
+    res.pipe_png,
+    res.bird_png
 ];
 
-var speed = 4;
+var speed = 240;
+var gravity = -13;
