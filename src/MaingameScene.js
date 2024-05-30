@@ -4,7 +4,6 @@ var MaingameLayer = cc.Layer.extend({
         this.drawNode = new cc.DrawNode();
         this.addChild(this.drawNode, 10);
         var size = cc.winSize;
-
 // Thêm background
         this.backgroundSprite1 = new cc.Sprite(res.background_png);
         this.backgroundSprite1.attr({
@@ -22,6 +21,23 @@ var MaingameLayer = cc.Layer.extend({
         });
         this.addChild(this.backgroundSprite2, 0);
 
+        this.ground1 = new cc.Sprite(res.ground_png);
+        this.ground1.attr({
+             x: size.width / 2,
+             y: 5,
+             scale: 1.0
+        });
+        this.addChild(this.ground1, 2);
+
+        this.ground2 = new cc.Sprite(res.ground_png);
+        this.ground2.attr({
+            x: size.width / 2 + this.ground1.width,
+            y: 5,
+            scale: 1.0
+        })
+        this.addChild(this.ground2, 2);
+
+// Pause Button
         var pauseItem = new cc.MenuItemFont("Pause", () => this.pauseGame(false), this);
         pauseItem.attr({
             x: size.width - 50,
@@ -57,8 +73,8 @@ var MaingameLayer = cc.Layer.extend({
 // Thêm Countdown
         this.countdown = 5;
 
-        this.countdownLabel = new cc.LabelTTF("5", "Arial", 48);
-        this.countdownLabel.setPosition(size.width / 2, size.height / 2);
+        this.countdownLabel = new cc.LabelTTF("5", res.flappy_ttf, 48);
+        this.countdownLabel.setPosition(size.width / 2, size.height / 4 * 3);
         this.addChild(this.countdownLabel, 10);
         this.schedule(this.updateCountdown, 1, this.countdown, 1);
 
@@ -76,15 +92,30 @@ var MaingameLayer = cc.Layer.extend({
 
 // Collision là các hình chữ nhật
     checkCollisions: function() {
-        for (var i = 0; i < this.pipeLayer.pipes.length; i++) {
-            var pipe = this.pipeLayer.pipes[i];
-            if (cc.rectIntersectsRect(this.bird.getBoundingBox(), pipe.getBoundingBox())) {
-                this.bird.die();
-                this.pauseGame(true);
-                this.writeScore();
-                break;
-            }
-        }
+//        if(cc.rectIntersectsRect(this.bird.getBoundingBox(), this.ground1.getBoundingBox())
+//            || cc.rectIntersectsRect(this.bird.getBoundingBox(), this.ground2.getBoundingBox())){
+//                this.bird.die();
+//                this.pauseGame(true);
+//                this.writeScore();
+//                return;
+//            }
+//
+//        for (var i = 0; i < 6; i += 2) {
+//            var pipe = this.pipeLayer.pipes[i];
+//            if (pipe && cc.rectIntersectsRect(this.bird.getBoundingBox(), pipe.getBoundingBox())) {
+//                this.bird.die();
+//                this.pauseGame(true);
+//                this.writeScore();
+//                break;
+//            }
+//            pipe = this.pipeLayer.pipes[i + 1];
+//            if (pipe && cc.rectIntersectsRect(this.bird.getBoundingBox(), pipe.getBoundingBox())) {
+//                this.bird.die();
+//                this.pauseGame(true);
+//                this.writeScore();
+//                break;
+//            }
+//        }
     },
 
 // Kiểm tra điểm
@@ -168,6 +199,9 @@ var MaingameLayer = cc.Layer.extend({
         this.backgroundSprite1.x -= speed / 2 * dt;
         this.backgroundSprite2.x -= speed / 2 * dt;
 
+        this.ground1.x -= speed * dt;
+        this.ground2.x -= speed * dt;
+
         if (this.backgroundSprite1.x <= -this.backgroundSprite1.width / 2) {
             this.backgroundSprite1.x = this.backgroundSprite2.x + this.backgroundSprite2.width;
         }
@@ -176,6 +210,13 @@ var MaingameLayer = cc.Layer.extend({
             this.backgroundSprite2.x = this.backgroundSprite1.x + this.backgroundSprite1.width;
         }
 
+        if (this.ground1.x <= -this.ground1.width / 2) {
+            this.ground1.x = this.ground2.x + this.ground2.width;
+        }
+
+        if (this.ground2.x <= -this.ground2.width / 2) {
+            this.ground2.x = this.ground1.x + this.ground1.width;
+        }
     },
 });
 

@@ -5,7 +5,7 @@ var Bird = cc.Sprite.extend({
         this.gravity = gravity;
         this.jumpStrength = 4;
         this.state = "FLYING_STRAIGHT";
-        this.t = 0;
+        this.angle = 0;
 
         var size = cc.winSize;
         this.attr({
@@ -23,10 +23,14 @@ var Bird = cc.Sprite.extend({
                 break;
             case "JUMPING":
                 this.ySpeed = 2 * this.jumpStrength;
+                this.angle = -45;
+                this.setRotation(this.angle);
                 this.state = "FALLING";
                 break;
             case "FALLING":
                 this.ySpeed += 2 * this.gravity * dt;
+                this.angle = Math.min(90, this.angle + 135 * dt);
+                this.setRotation(this.angle)
                 break;
             case "DEAD":
                 this.ySpeed = 0;
