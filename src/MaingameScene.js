@@ -87,27 +87,47 @@ var MaingameLayer = cc.Layer.extend({
         this.cooldownLabel.setPosition(size.width / 3, size.height / 7 * 6);
         this.addChild(this.cooldownLabel, 10);
 
+        this.cooldownLabel2 = new ccui.Text("Skill 2: OK", res.flappy_ttf, 48);
+        this.cooldownLabel2.setPosition(size.width / 3 * 2, size.height / 7 * 6);
+        this.addChild(this.cooldownLabel2, 10);
+
         this.scheduleUpdate();
 
         return true;
     },
 
-// Hiện cooldown
-
-
 // Hàm cho Listener
     onKeyPressed: function(keyCode, event) {
         switch (keyCode){
             case cc.KEY.space:
-                if(this.bird.state === "JUMPING" || this.bird.state === "FLYING_STRAIGHT" || this.bird.state === "FALLING") this.bird.jump();
+                if(this.bird.state === "JUMPING"
+                || this.bird.state === "FLYING_STRAIGHT"
+                || this.bird.state === "FALLING") this.bird.jump();
                 break;
-            case cc.KEY.z:
+            case cc.KEY.x:
                 if(this.bird.cooldown1 <= 0){
-                    this.setAllSpeed(this.speed * DASH_AMPLIFY);
-                    this.cooldownLabel.setString("Skill 1: " + COOLDOWN_SKILL_1.toString());
-                    this.schedule(this.updateCooldown, 1, COOLDOWN_SKILL_1 + 1 , 0);
+                    //Cast skill 1
                     this.bird.skill1();
+
+                    this.cooldownLabel.setString("Skill 1: 3s");
+
+                    //Tốc độ sẽ được amplify
+                    this.setAllSpeed(this.speed * DASH_AMPLIFY);
+
+                    //Sau khi hết thời gian dash thì vận tốc quay lại như cũ
                     setTimeout(() => this.setAllSpeed(BASE_SPEED),DASH_DURATION);
+
+                    //Đếm ngược skill 1
+                    this.schedule(this.updateCooldown, 1, COOLDOWN_SKILL_1 + 1 , 0);
+                }
+                break;
+            case cc.KEY.c:
+                if(this.bird.cooldown2 <= 0){
+                    this.bird.skill2();
+
+                    this.cooldownLabel2.setString("Skill 2: 10s");
+
+                    this.schedule(this.updateCooldown2, 1, COOLDOWN_SKILL_2 + 1 , 0);
                 }
                 break;
         }
@@ -134,32 +154,28 @@ var MaingameLayer = cc.Layer.extend({
 
 // Collision là các hình chữ nhật
     checkCollisions: function() {
-        if(this.bird.state === "SKILL2" || this.bird.state === "SKILL1") return;
+        if(this.bird.onSkill1 || this.bird.onSkill2) return;
 
-        if(this.checkIndividualCollision(this.bird.getPosition(), this.ground1.getBoundingBox(), this.bird.radius)
-           || this.checkIndividualCollision(this.bird.getPosition(), this.ground2.getBoundingBox(), this.bird.radius)){
+        if(this.bird.y <= 15){
                this.bird.die();
                this.pauseGame(true);
                this.writeScore();
                return;
            }
 
-        for (var i = 0; i < 10; i += 2) {
-           var pipe = this.pipeLayer.pipes[i];
+           var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
                this.bird.die();
                this.pauseGame(true);
                this.writeScore();
-               break;
+               return;
            }
-           pipe = this.pipeLayer.pipes[i + 1];
+           pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + 1];
            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
                this.bird.die();
                this.pauseGame(true);
                this.writeScore();
-               break;
            }
-       }
     },
 
 // Kiểm tra điểm
@@ -170,6 +186,7 @@ var MaingameLayer = cc.Layer.extend({
             if (!pipe.scored && pipe.getPositionX() + pipe.width / 2 < this.bird.getPositionX()) {
                 pipe.scored = true;
                 this.scoreLayer.incrementScore();
+                cc.audioEngine.playEffect(res.score_mp3, false);
             }
         }
     },
@@ -204,10 +221,20 @@ var MaingameLayer = cc.Layer.extend({
     updateCooldown: function () {
 
         this.bird.cooldown1 = Math.max(0, this.bird.cooldown1 - 1);
-        this.cooldownLabel.setString("Skill 1: " + (this.bird.cooldown1).toString());
+        this.cooldownLabel.setString("Skill 1: " + (this.bird.cooldown1).toString() + "s");
         if(this.bird.cooldown1 <= 0){
             this.cooldownLabel.setString("Skill 1: OK");
             this.unschedule(this.updateCooldown);
+        }
+    },
+
+    updateCooldown2: function () {
+
+        this.bird.cooldown2 = Math.max(0, this.bird.cooldown2 - 1);
+        this.cooldownLabel2.setString("Skill 2: " + (this.bird.cooldown2).toString() + "s");
+        if(this.bird.cooldown2 <= 0){
+            this.cooldownLabel.setString("Skill 2: OK");
+            this.unschedule(this.updateCooldown2);
         }
     },
 
@@ -266,7 +293,7 @@ var MaingameLayer = cc.Layer.extend({
 
         if(this.getChildByTag(1) !== null) return;
 
-        // this.checkCollisions();
+        this.checkCollisions();
         this.checkScore();
 
         this.backgroundSprite1.x -= this.speed / 2 * dt;

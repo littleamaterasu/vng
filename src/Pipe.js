@@ -19,6 +19,7 @@ var PipeLayer = cc.Layer.extend({
         this._super();
         this.pipes = [];
         this.pipeSpeed = pipeSpeed;
+        this.currentIndex = 0;
 
         this.scheduleUpdate();
         this.addPipe();
@@ -27,7 +28,7 @@ var PipeLayer = cc.Layer.extend({
         const size = cc.winSize;
         var pipeTmp = new Pipe();
         const interval = (size.width - pipeTmp.width * 4) / 4 + pipeTmp.width;
-        const gap = size.height / 4;
+        const gap = size.height / 3;
 
         for(var i = 0; i < MAX_PIPES / 2; ++i){
             var pipe = new Pipe();
@@ -69,7 +70,7 @@ var PipeLayer = cc.Layer.extend({
 
     update: function (dt) {
         const size = cc.winSize;
-        const gap = size.height / 4;
+        const gap = size.height / 3;
 
         for (var i = 0; i < MAX_PIPES; i += 2) {
 
@@ -79,6 +80,10 @@ var PipeLayer = cc.Layer.extend({
             // Di chuyen voi toc do la speed
             pipe.x -= this.pipeSpeed * dt;
             reversePipe.x -= this.pipeSpeed * dt;
+
+            if (pipe.x < size.width / 2 + 17 + pipe.width / 2) {
+                this.currentIndex = i;
+            }
 
             if (pipe.x < -pipe.width / 2) {
 
