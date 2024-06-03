@@ -1,12 +1,9 @@
 var MaingameLayer = cc.Layer.extend({
     ctor: function() {
         this._super();
-
-        this.drawNode = new cc.DrawNode();
-        this.addChild(this.drawNode, 10);
-
+        // this.drawNode = new cc.DrawNode();
+        // this.addChild(this.drawNode, 10);
         this.speed = BASE_SPEED;
-        cc.log(cc.sys.localStorage.getItem("bestScore"));
         var size = cc.winSize;
 
 // Thêm background
@@ -176,16 +173,7 @@ var MaingameLayer = cc.Layer.extend({
 
     endGame: function (){
         this.bird.die();
-        var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
-        if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
-            cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
-            newBestScoreBanner.setRotation(45);
-            newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
-            this.addChild(newBestScoreBanner, 3);
-        }
-        else{
-            this.removeChild(newBestScoreBanner);
-        }
+
         this.pauseGame(true);
     },
 
@@ -213,6 +201,16 @@ var MaingameLayer = cc.Layer.extend({
         this.pipeLayer.unscheduleUpdate();
 
         if(lost) setTimeout(() => {
+            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
+            if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
+                cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
+                newBestScoreBanner.setRotation(45);
+                newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
+                this.addChild(newBestScoreBanner, 3);
+            }
+            else{
+                this.removeChild(newBestScoreBanner);
+            }
             cc.audioEngine.pauseMusic();
             cc.director.pause();
             var pauseLayer = new PauseLayer(lost);
@@ -221,6 +219,16 @@ var MaingameLayer = cc.Layer.extend({
             this.addChild(pauseLayer, 4);
         }, 1000)
         else{
+            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
+            if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
+                cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
+                newBestScoreBanner.setRotation(45);
+                newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
+                this.addChild(newBestScoreBanner, 3);
+            }
+            else{
+                this.removeChild(newBestScoreBanner);
+            }
             cc.audioEngine.pauseMusic();
             cc.director.pause();
             var pauseLayer = new PauseLayer(lost);

@@ -27,9 +27,6 @@ var Bird = cc.Sprite.extend({
             case "FLYING_STRAIGHT":
                 break;
             case "JUMPING":
-                this.ySpeed = this.jumpStrength;
-                this.angle = MAX_UP_ANGLE;
-                this.runAction(cc.rotateTo(0.5, this.angle));
                 this.state = "FALLING";
                 break;
             case "FALLING":
@@ -63,12 +60,14 @@ var Bird = cc.Sprite.extend({
     jump: function() {
         if (this.state !== "DEAD") {
             cc.audioEngine.playEffect(res.jump_wav, false);
+            this.ySpeed = this.jumpStrength;
+            this.angle = MAX_UP_ANGLE;
+            this.runAction(cc.rotateTo(0.5, this.angle));
             this.state = "JUMPING";
         }
     },
 
     die: function() {
-        this.jumpStrength /= 2;
         this.gravity *= 2;
         this.jump();
         this.state = "DEAD";
