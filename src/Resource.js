@@ -32,6 +32,9 @@ const state = {
 
 }
 
+const WINDOW_X = 1080;
+const WINDOW_Y = 480;
+
 const BASE_SPEED = 210;
 const GRAVITY = -25;
 const JUMP_STRENGTH = 6.5;
@@ -41,6 +44,8 @@ const TURN_RATE = 210;
 
 const MAX_PIPES = 10;
 const START_GAP = 720;
+const HEIGHT_GAP = 140;
+const MIDDLE_GAP = 20;
 
 // cooldown các skill tính bằng ms
 const COOLDOWN_SKILL_1 = 3;  // Dash

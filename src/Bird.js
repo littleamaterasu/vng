@@ -38,7 +38,9 @@ var Bird = cc.Sprite.extend({
                 this.setRotation(this.angle)
                 break;
             case "DEAD":
-                this.ySpeed = 0;
+                this.ySpeed += this.gravity * dt;
+                this.angle = Math.min(MAX_DOWN_ANGLE, this.angle + TURN_RATE * dt);
+                this.setRotation(this.angle)
                 break;
             default:
                 this.ySpeed = 0;
@@ -66,6 +68,9 @@ var Bird = cc.Sprite.extend({
     },
 
     die: function() {
+        this.jumpStrength /= 2;
+        this.gravity *= 2;
+        this.jump();
         this.state = "DEAD";
         cc.audioEngine.playEffect(res.hurt_wav, false);
     },

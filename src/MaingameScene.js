@@ -6,7 +6,7 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.drawNode, 10);
 
         this.speed = BASE_SPEED;
-
+        cc.log(cc.sys.localStorage.getItem("bestScore"));
         var size = cc.winSize;
 
 // Thêm background
@@ -32,7 +32,7 @@ var MaingameLayer = cc.Layer.extend({
              y: 5,
              scale: 1.0
         });
-        this.addChild(this.ground1, 2);
+        this.addChild(this.ground1, 3);
 
         this.ground2 = new cc.Sprite(res.ground_png);
         this.ground2.attr({
@@ -40,7 +40,7 @@ var MaingameLayer = cc.Layer.extend({
             y: 5,
             scale: 1.0
         })
-        this.addChild(this.ground2, 2);
+        this.addChild(this.ground2, 3);
 
 // Pause Button
         var pauseItem = new cc.MenuItemFont("Pause", () => this.pauseGame(false), this);
@@ -83,12 +83,14 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.countdownLabel, 10);
         this.schedule(this.updateCountdown, 1, this.countdown, 1);
 
-        this.cooldownLabel = new ccui.Text("Skill 1: OK", res.flappy_ttf, 48);
-        this.cooldownLabel.setPosition(size.width / 3, size.height / 7 * 6);
+        this.cooldownLabel = new ccui.Text("Dash (press Q): OK", res.flappy_ttf, 32);
+        this.cooldownLabel.setPosition(150, size.height / 3 * 2);
+        this.cooldownLabel.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT);
         this.addChild(this.cooldownLabel, 10);
 
-        this.cooldownLabel2 = new ccui.Text("Skill 2: OK", res.flappy_ttf, 48);
-        this.cooldownLabel2.setPosition(size.width / 3 * 2, size.height / 7 * 6);
+        this.cooldownLabel2 = new ccui.Text("Power (press E): OK", res.flappy_ttf, 32);
+        this.cooldownLabel2.setPosition(150, size.height / 3 * 2 - 50);
+        this.cooldownLabel.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT);
         this.addChild(this.cooldownLabel2, 10);
 
         this.scheduleUpdate();
@@ -104,12 +106,12 @@ var MaingameLayer = cc.Layer.extend({
                 || this.bird.state === "FLYING_STRAIGHT"
                 || this.bird.state === "FALLING") this.bird.jump();
                 break;
-            case cc.KEY.x:
+            case cc.KEY.q:
                 if(this.bird.cooldown1 <= 0){
                     //Cast skill 1
                     this.bird.skill1();
 
-                    this.cooldownLabel.setString("Skill 1: 3s");
+                    this.cooldownLabel.setString("Dash: 3s");
 
                     //Tốc độ sẽ được amplify
                     this.setAllSpeed(this.speed * DASH_AMPLIFY);
@@ -121,11 +123,11 @@ var MaingameLayer = cc.Layer.extend({
                     this.schedule(this.updateCooldown, 1, COOLDOWN_SKILL_1 + 1 , 0);
                 }
                 break;
-            case cc.KEY.c:
+            case cc.KEY.e:
                 if(this.bird.cooldown2 <= 0){
                     this.bird.skill2();
 
-                    this.cooldownLabel2.setString("Skill 2: 10s");
+                    this.cooldownLabel2.setString("Power: 10s");
 
                     this.schedule(this.updateCooldown2, 1, COOLDOWN_SKILL_2 + 1 , 0);
                 }
@@ -157,25 +159,34 @@ var MaingameLayer = cc.Layer.extend({
         if(this.bird.onSkill1 || this.bird.onSkill2) return;
 
         if(this.bird.y <= 15){
-               this.bird.die();
-               this.pauseGame(true);
-               this.writeScore();
+               this.endGame();
                return;
            }
 
            var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-               this.bird.die();
-               this.pauseGame(true);
-               this.writeScore();
+               this.endGame();
                return;
            }
            pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + 1];
            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-               this.bird.die();
-               this.pauseGame(true);
-               this.writeScore();
+               this.endGame();
            }
+    },
+
+    endGame: function (){
+        this.bird.die();
+        var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
+        if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
+            cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
+            newBestScoreBanner.setRotation(45);
+            newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
+            this.addChild(newBestScoreBanner, 3);
+        }
+        else{
+            this.removeChild(newBestScoreBanner);
+        }
+        this.pauseGame(true);
     },
 
 // Kiểm tra điểm
@@ -198,11 +209,26 @@ var MaingameLayer = cc.Layer.extend({
             return;
         }
 
-        cc.audioEngine.pauseMusic();
-        cc.director.pause();
-        var pauseLayer = new PauseLayer(lost);
-        pauseLayer.setTag(1);
-        this.addChild(pauseLayer, 4);
+        this.unscheduleUpdate();
+        this.pipeLayer.unscheduleUpdate();
+
+        if(lost) setTimeout(() => {
+            cc.audioEngine.pauseMusic();
+            cc.director.pause();
+            var pauseLayer = new PauseLayer(lost);
+            pauseLayer.setTag(1);
+            this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
+            this.addChild(pauseLayer, 4);
+        }, 1000)
+        else{
+            cc.audioEngine.pauseMusic();
+            cc.director.pause();
+            var pauseLayer = new PauseLayer(lost);
+            pauseLayer.setTag(1);
+            this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
+            this.addChild(pauseLayer, 4);
+        }
+
     },
 
 // Countdowm
@@ -210,7 +236,7 @@ var MaingameLayer = cc.Layer.extend({
         this.countdown--;
         this.countdownLabel.setString(this.countdown.toString());
 
-        if (this.countdown <= 0) {
+        if (this.countdown <= 0 || this.bird.state !== "FLYING_STRAIGHT") {
             if(this.bird.state === "FLYING_STRAIGHT") this.bird.state = "FALLING";
             this.countdownLabel.setString("");
             this.unschedule(this.updateCountdown);
@@ -221,9 +247,9 @@ var MaingameLayer = cc.Layer.extend({
     updateCooldown: function () {
 
         this.bird.cooldown1 = Math.max(0, this.bird.cooldown1 - 1);
-        this.cooldownLabel.setString("Skill 1: " + (this.bird.cooldown1).toString() + "s");
+        this.cooldownLabel.setString("Dash: " + (this.bird.cooldown1).toString() + "s");
         if(this.bird.cooldown1 <= 0){
-            this.cooldownLabel.setString("Skill 1: OK");
+            this.cooldownLabel.setString("Dash (press Q): OK");
             this.unschedule(this.updateCooldown);
         }
     },
@@ -231,38 +257,13 @@ var MaingameLayer = cc.Layer.extend({
     updateCooldown2: function () {
 
         this.bird.cooldown2 = Math.max(0, this.bird.cooldown2 - 1);
-        this.cooldownLabel2.setString("Skill 2: " + (this.bird.cooldown2).toString() + "s");
+        this.cooldownLabel2.setString("Power: " + (this.bird.cooldown2).toString() + "s");
         if(this.bird.cooldown2 <= 0){
-            this.cooldownLabel.setString("Skill 2: OK");
+            this.cooldownLabel2.setString("Power (press E): OK");
             this.unschedule(this.updateCooldown2);
         }
     },
 
-// Write Score
-    writeScore: function() {
-        var self = this;
-        var scores = [];
-        cc.loader.loadJson("res/scores.json", function(err, data) {
-            if (!err) {
-                var scores = data;
-                // Thực hiện các thao tác liên quan đến dữ liệu ở đây, ví dụ:
-                cc.log("Scores loaded:", scores);
-            } else {
-                cc.log("Error loading scores:", err);
-            }
-        });
-
-        scores.push(this.scoreLayer.score);
-
-        scores.sort((a, b) => {
-            return a - b;
-        });
-
-        if(scores.length > 10){
-            scores.shift();
-        }
-
-    },
 // Vẽ Bounding
    drawBoundingBox: function() {
         this.drawNode.clear();
@@ -290,11 +291,12 @@ var MaingameLayer = cc.Layer.extend({
 // Update kiểm tra Điểm và Va chạm, di chuyển background
     update: function(dt) {
        // this.drawBoundingBox();
-
         if(this.getChildByTag(1) !== null) return;
 
         this.checkCollisions();
         this.checkScore();
+
+        this.pipeLayer.middleGap = Math.min(this.scoreLayer.score / 10 * 5 + MIDDLE_GAP, 100 );
 
         this.backgroundSprite1.x -= this.speed / 2 * dt;
         this.backgroundSprite2.x -= this.speed / 2 * dt;

@@ -32,14 +32,10 @@ var MenuLayer = cc.Layer.extend({
 
     showScores: function() {
         var self = this;
+        const bestScore = cc.sys.localStorage.getItem("bestScore") ? cc.sys.localStorage.getItem("bestScore") : 0;
 
-        cc.loader.loadJson("res/scores.json", function(err, data) {
-            if (!err) {
-                self.showScoresDialog(data);
-            } else {
-                cc.log("Error loading scores:", err);
-            }
-        });
+        self.showScoresDialog(bestScore)
+
     },
 
     showScoresDialog: function(scores) {
@@ -49,19 +45,13 @@ var MenuLayer = cc.Layer.extend({
 
         var size = cc.winSize;
 
-        var titleLabel = new cc.LabelTTF("High Scores", "Arial", 32);
+        var titleLabel = new ccui.Text("High Scores", res.flappy_ttf, 64);
         titleLabel.setPosition(size.width / 2, size.height - 50);
         dialog.addChild(titleLabel);
 
-        scores.sort(function(a, b) {
-            return b.score - a.score;
-        });
-
-        for (var i = 0; i < scores.length; i++) {
-            var scoreLabel = new cc.LabelTTF(scores[i].score, "Arial", 24);
-            scoreLabel.setPosition(size.width / 2, size.height - 100 - i * 30);
-            dialog.addChild(scoreLabel);
-        }
+        var scoreLabel = new ccui.Text(scores, res.flappy_ttf, 48);
+        scoreLabel.setPosition(size.width / 2, size.height - 200);
+        dialog.addChild(scoreLabel);
 
         var closeButton = new cc.MenuItemFont("Close", this.closeScoresDialog, this);
         closeButton.setPosition(size.width / 2, 50);
