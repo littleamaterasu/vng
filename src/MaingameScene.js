@@ -40,16 +40,15 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.ground2, 3);
 
 // Pause Button
-        var pauseItem = new cc.MenuItemFont("Pause", () => this.pauseGame(false), this);
-        pauseItem.attr({
-            x: size.width - 50,
-            y: size.height - 30
+        var pauseLabel = new ccui.Text("Pause", res.flappy_ttf, 32);
+        pauseLabel.setPosition(cc.p(size.width - 50, size.height - 30));
+        this.addChild(pauseLabel, 2);
+
+        pauseLabel.setTouchEnabled(true);
+        pauseLabel.addClickEventListener(() => {
+            this.pauseGame(false);
         });
 
-        var menu = new cc.Menu(pauseItem);
-        menu.x = 0;
-        menu.y = 0;
-        this.addChild(menu, 2);
 
 // Thêm nhạc
         cc.audioEngine.playMusic(res.marios_way_mp3, true);
@@ -80,15 +79,19 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.countdownLabel, 10);
         this.schedule(this.updateCountdown, 1, this.countdown, 1);
 
-        this.cooldownLabel = new ccui.Text("Dash (press Q): OK", res.flappy_ttf, 32);
-        this.cooldownLabel.setPosition(150, size.height / 3 * 2);
-        this.cooldownLabel.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT);
-        this.addChild(this.cooldownLabel, 10);
+        this.cooldownLabel = new ccui.Text("Dash (press Q): OK", res.font_ttf, 32);
+        this.cooldownLabel.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT);
+        this.cooldownLabel.setAnchorPoint(1, 0.5); // Anchor point to the right-center
+        this.cooldownLabel.setPosition(1040, size.height / 3 * 2);
+        this.addChild(this.cooldownLabel, 3);
 
-        this.cooldownLabel2 = new ccui.Text("Power (press E): OK", res.flappy_ttf, 32);
-        this.cooldownLabel2.setPosition(150, size.height / 3 * 2 - 50);
-        this.cooldownLabel.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_LEFT);
-        this.addChild(this.cooldownLabel2, 10);
+        this.cooldownLabel2 = new ccui.Text("Power (press E): OK", res.font_ttf, 32);
+        this.cooldownLabel2.setTextHorizontalAlignment(cc.TEXT_ALIGNMENT_RIGHT);
+        this.cooldownLabel2.setAnchorPoint(1, 0.5); // Anchor point to the right-center
+        this.cooldownLabel2.setPosition(1040, size.height / 3 * 2 - 50);
+        this.addChild(this.cooldownLabel2, 3);
+
+
 
         this.scheduleUpdate();
 
@@ -114,7 +117,9 @@ var MaingameLayer = cc.Layer.extend({
                     this.setAllSpeed(this.speed * DASH_AMPLIFY);
 
                     //Sau khi hết thời gian dash thì vận tốc quay lại như cũ
-                    setTimeout(() => this.setAllSpeed(BASE_SPEED),DASH_DURATION);
+                    setTimeout(() => {
+                        this.setAllSpeed(BASE_SPEED);
+                        },DASH_DURATION);
 
                     //Đếm ngược skill 1
                     this.schedule(this.updateCooldown, 1, COOLDOWN_SKILL_1 + 1 , 0);
@@ -135,7 +140,6 @@ var MaingameLayer = cc.Layer.extend({
     setAllSpeed: function (speed) {
         this.speed = speed;
         this.pipeLayer.setPipeSpeed(this.speed);
-        this.bird.state = "FALLING";
     },
 
 // Tìm vị trí gần hình tròn nhất
@@ -153,22 +157,31 @@ var MaingameLayer = cc.Layer.extend({
 
 // Collision là các hình chữ nhật
     checkCollisions: function() {
-        if(this.bird.onSkill1 || this.bird.onSkill2) return;
 
-        if(this.bird.y <= 15){
-               this.endGame();
-               return;
-           }
+//        if(this.bird.y <= 15){
+//                this.endGame();
+//                return;
+//            }
 
-           var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
-           if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-               this.endGame();
-               return;
-           }
-           pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + 1];
-           if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-               this.endGame();
-           }
+            var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
+            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
+                if(this.bird.onSkill1 || this.bird.onSkill2){
+                    pipe.broken = true;
+                }
+//                else{
+//                    this.endGame();
+//                    return;
+//                }
+            }
+            pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + 1];
+            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
+                if(this.bird.onSkill1 || this.bird.onSkill2){
+                    pipe.broken = true;
+                }
+//                else{
+//                    this.endGame();
+//                }
+            }
     },
 
     endGame: function (){
@@ -197,45 +210,35 @@ var MaingameLayer = cc.Layer.extend({
             return;
         }
 
-        this.unscheduleUpdate();
-        this.pipeLayer.unscheduleUpdate();
-
-        if(lost) setTimeout(() => {
-            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
-            if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
-                cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
-                newBestScoreBanner.setRotation(45);
-                newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
-                this.addChild(newBestScoreBanner, 3);
-            }
-            else{
-                this.removeChild(newBestScoreBanner);
-            }
-            cc.audioEngine.pauseMusic();
-            cc.director.pause();
-            var pauseLayer = new PauseLayer(lost);
-            pauseLayer.setTag(1);
-            this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
-            this.addChild(pauseLayer, 4);
-        }, 1000)
-        else{
-            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
-            if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
-                cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
-                newBestScoreBanner.setRotation(45);
-                newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
-                this.addChild(newBestScoreBanner, 3);
-            }
-            else{
-                this.removeChild(newBestScoreBanner);
-            }
-            cc.audioEngine.pauseMusic();
-            cc.director.pause();
-            var pauseLayer = new PauseLayer(lost);
-            pauseLayer.setTag(1);
-            this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
-            this.addChild(pauseLayer, 4);
+        if(lost){
+            this.unscheduleUpdate();
+            this.pipeLayer.unscheduleUpdate();
         }
+
+        setTimeout(() => {
+        // khi thua mới đổi vị trí score
+        if(lost) {
+            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
+                if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
+                    cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
+                    newBestScoreBanner.setRotation(45);
+                    newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
+                    this.addChild(newBestScoreBanner, 3);
+                }
+                else{
+                    this.removeChild(newBestScoreBanner);
+                }
+                this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
+            }
+
+            // pause thì dừng nhạc, dừng game,
+            // và hiện pause menu với giá trị lost thể hiện đã thua hay không
+            cc.audioEngine.pauseMusic();
+            cc.director.pause();
+            var pauseLayer = new PauseLayer(lost);
+            pauseLayer.setTag(1);
+            this.addChild(pauseLayer, 4);
+        }, lost ? 1000 : 0)
 
     },
 

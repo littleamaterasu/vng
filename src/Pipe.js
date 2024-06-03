@@ -4,14 +4,29 @@ var Pipe = cc.Sprite.extend({
         this._super(res.pipe_png);
         this.broken = false;
         this.scored = false;
+        this.scheduleUpdate();
+    },
 
+    update: function(dt) {
+        if (this.broken) {
+            this.setRotation(Math.min(this.getRotation() + TURN_RATE * dt, 90));
+            this.y = Math.max(this.y + GRAVITY * 25 * dt, 0);
+        }
     }
+
 });
 
 var ReversePipe = Pipe.extend({
     ctor: function () {
         this._super();
         this.setRotation(180);
+    },
+
+    update: function(dt) {
+        if (this.broken) {
+            this.setRotation(Math.max(this.getRotation() - TURN_RATE * dt, 90));
+            this.y = Math.max(this.y + GRAVITY * 25 * dt, 0);
+        }
     }
 });
 
@@ -114,7 +129,8 @@ var PipeLayer = cc.Layer.extend({
             pipe.x -= this.pipeSpeed * dt;
             reversePipe.x -= this.pipeSpeed * dt;
 
-            if (pipe.x < size.width / 2 + 17 + pipe.width / 2) {
+            if (pipe.x < BIRD_START_X + 17 + pipe.width / 2
+                && pipe.x > BIRD_START_X - 17 - pipe.width / 2) {
                 this.currentIndex = i;
             }
 
@@ -148,16 +164,20 @@ var PipeLayer = cc.Layer.extend({
                     yPos = Math.random() * (this.pipes[index].y - this.middleGap);
                 }
                 pipe.attr({
+                    broken: false,
                     x: size.width + interval - pipe.width / 2,
                     y: yPos,
                     scored: false
                 })
+                pipe.setRotation(0);
 
                 reversePipe.attr({
+                    broken: false,
                     x: size.width + interval - pipe.width / 2,
                     y: yPos + pipe.height + gap,
                     scored: false
                 })
+                reversePipe.setRotation(180);
             }
         }
     }

@@ -8,7 +8,8 @@ const res = {
     jump_wav: 'res/jump.mp3',
     hurt_wav: 'res/hurt.mp3',
     explosion_wav: 'res/explosion.mp3',
-    score_mp3: 'res/score.mp3'
+    score_mp3: 'res/score.mp3',
+    font_ttf: 'res/font.ttf'
 };
 
 const g_mainmenu = [
@@ -24,7 +25,8 @@ const g_maingame = [
     res.hurt_wav,
     res.explosion_wav,
     res.jump_wav,
-    res.score_mp3
+    res.score_mp3,
+    res.font_ttf
 ];
 
 const state = {
@@ -34,6 +36,8 @@ const state = {
 
 const WINDOW_X = 1080;
 const WINDOW_Y = 480;
+
+const BIRD_START_X = 200;
 
 const BASE_SPEED = 210;
 const GRAVITY = -25;
@@ -48,10 +52,10 @@ const HEIGHT_GAP = 140;
 const MIDDLE_GAP = 20;
 
 // cooldown các skill tính bằng ms
-const COOLDOWN_SKILL_1 = 3;  // Dash
+const COOLDOWN_SKILL_1 = 1;  // Dash
 const COOLDOWN_SKILL_2 = 10; // Grow
 
-const DASH_AMPLIFY = 5;
-const DASH_DURATION = 150;
+const DASH_AMPLIFY = 3;
+const DASH_DURATION = 1500;
 
 
