@@ -120,6 +120,13 @@ var PipeLayer = cc.Layer.extend({
         const gap = HEIGHT_GAP;
         const maxHeight = size.height / 3;
 
+        const checkCollisionPipe = this.pipes[this.currentIndex];
+
+        if (checkCollisionPipe.x < BIRD_START_X - 17 - checkCollisionPipe.width / 2) {
+            this.currentIndex += 2;
+            this.currentIndex %= (MAX_PIPES / 2);
+        }
+
         for (var i = 0; i < MAX_PIPES; i += 2) {
 
             var pipe = this.pipes[i];
@@ -128,11 +135,6 @@ var PipeLayer = cc.Layer.extend({
             // Di chuyen voi toc do la speed
             pipe.x -= this.pipeSpeed * dt;
             reversePipe.x -= this.pipeSpeed * dt;
-
-            if (pipe.x < BIRD_START_X + 17 + pipe.width / 2
-                && pipe.x > BIRD_START_X - 17 - pipe.width / 2) {
-                this.currentIndex = i;
-            }
 
             if (pipe.x < -pipe.width / 2) {
 

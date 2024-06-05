@@ -11,7 +11,7 @@ var ScoreLayer = cc.Layer.extend({
         this.label1 = new ccui.Text("Best score: " + (cc.sys.localStorage.getItem("bestScore") ? cc.sys.localStorage.getItem("bestScore") : 0), res.flappy_ttf, 24);
         this.label1.setPosition(100, size.height - 60);
         this.addChild(this.label);
-        this.addChild(this.label1)
+        this.addChild(this.label1);
 
         return true;
     },
@@ -23,6 +23,6 @@ var ScoreLayer = cc.Layer.extend({
 
     incrementScore: function() {
         this.score++;
-        this.label.setString("Score: " + this.score / 2);
+        this.label.setString("Score: " + this.score);
     }
 });

@@ -1,8 +1,7 @@
 var MaingameLayer = cc.Layer.extend({
     ctor: function() {
         this._super();
-        // this.drawNode = new cc.DrawNode();
-        // this.addChild(this.drawNode, 10);
+
         this.speed = BASE_SPEED;
         var size = cc.winSize;
 
@@ -16,6 +15,7 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.backgroundSprite1, 0);
 
         this.backgroundSprite2 = new cc.Sprite(res.background_png);
+        // background thứ 2 sẽ nối liền với b1
         this.backgroundSprite2.attr({
             x: size.width / 2 + this.backgroundSprite1.width,
             y: size.height / 2,
@@ -32,6 +32,7 @@ var MaingameLayer = cc.Layer.extend({
         this.addChild(this.ground1, 3);
 
         this.ground2 = new cc.Sprite(res.ground_png);
+        // ground 2 sẽ nối liền ground 1
         this.ground2.attr({
             x: size.width / 2 + this.ground1.width,
             y: 5,
@@ -91,8 +92,6 @@ var MaingameLayer = cc.Layer.extend({
         this.cooldownLabel2.setPosition(1040, size.height / 3 * 2 - 50);
         this.addChild(this.cooldownLabel2, 3);
 
-
-
         this.scheduleUpdate();
 
         return true;
@@ -102,18 +101,19 @@ var MaingameLayer = cc.Layer.extend({
     onKeyPressed: function(keyCode, event) {
         switch (keyCode){
             case cc.KEY.space:
-                if(this.bird.state === "JUMPING"
-                || this.bird.state === "FLYING_STRAIGHT"
-                || this.bird.state === "FALLING") this.bird.jump();
+                if(this.bird.state === state.JUMPING
+                || this.bird.state === state.FLYING_STRAIGHT
+                || this.bird.state === state.FALLING) this.bird.jump();
                 break;
             case cc.KEY.q:
-                if(this.bird.cooldown1 <= 0){
+                if(this.bird.cooldownSkill1 <= 0){
                     //Cast skill 1
                     this.bird.skill1();
 
+                    // Hiện cooldown
                     this.cooldownLabel.setString("Dash: 3s");
 
-                    //Tốc độ sẽ được amplify
+                    //Tốc độ của các vật khác sẽ được amplify
                     this.setAllSpeed(this.speed * DASH_AMPLIFY);
 
                     //Sau khi hết thời gian dash thì vận tốc quay lại như cũ
@@ -126,17 +126,19 @@ var MaingameLayer = cc.Layer.extend({
                 }
                 break;
             case cc.KEY.e:
-                if(this.bird.cooldown2 <= 0){
+                if(this.bird.cooldownSkill2 <= 0){
+
                     this.bird.skill2();
 
                     this.cooldownLabel2.setString("Power: 10s");
 
-                    this.schedule(this.updateCooldown2, 1, COOLDOWN_SKILL_2 + 1 , 0);
+                    this.schedule(this.updatecooldownSkill2, 1, COOLDOWN_SKILL_2 + 1 , 0);
                 }
                 break;
         }
     },
 
+    // speed của bg và g, speed của ống
     setAllSpeed: function (speed) {
         this.speed = speed;
         this.pipeLayer.setPipeSpeed(this.speed);
@@ -144,7 +146,30 @@ var MaingameLayer = cc.Layer.extend({
 
 // Tìm vị trí gần hình tròn nhất
     checkIndividualCollision: function (c, r, radius){
+        // c là hình tròn, r là hình chữ nhật
+
+        // Tìm điểm gần tâm hình tròn nhất trên hình chữ nhật
+
+        // Chiếu tâm đuòng tròn xuống một cạnh theo Oy
+        // Nếu điểm đó
+        //              .
+        //              |
+        // _____________|____________
+        // |             (X, Y)     |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |                        |
+        // |________________________|
         var Y = Math.min(Math.max(c.y, r.y), r.y + r.height);
+
+        // Chiếu tâm đường tròn xuống một cạnh theo Ox
+        // Nếu điểm đó thuộc cạnh đó thì X của của điểm gần nhất sẽ là X của hình chiếu
+        // Nếu không X của điểm gần nhất sẽ là một trong 2 điểm của đoạn thẳng
         var X = Math.min(Math.max(c.x, r.x), r.x + r.width);
 
         var dX = c.x - X;
@@ -155,72 +180,55 @@ var MaingameLayer = cc.Layer.extend({
         return false;
     },
 
-// Collision là các hình chữ nhật
     checkCollisions: function() {
 
-//        if(this.bird.y <= 15){
-//                this.endGame();
-//                return;
-//            }
+        // Check rơi xuống đất
+        if(this.bird.y <= GROUND_DEAD_GAP){
+             this.endGame();
+             return;
+        }
 
-            var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
+        // check với ống ở vị trí có thể va chạm
+        for(var i = 0; i <= 1; i ++){
+            var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + i];
             if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-                if(this.bird.onSkill1 || this.bird.onSkill2){
+                if(this.bird.onSkill2){
                     pipe.broken = true;
                 }
-//                else{
-//                    this.endGame();
-//                    return;
-//                }
-            }
-            pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex + 1];
-            if (pipe && this.checkIndividualCollision(this.bird.getPosition(), pipe.getBoundingBox(), this.bird.radius)) {
-                if(this.bird.onSkill1 || this.bird.onSkill2){
-                    pipe.broken = true;
+                else{
+                    this.endGame();
+                    return;
                 }
-//                else{
-//                    this.endGame();
-//                }
-            }
-    },
-
-    endGame: function (){
-        this.bird.die();
-
-        this.pauseGame(true);
-    },
-
-// Kiểm tra điểm
-    checkScore: function() {
-        for (var i = 0; i < this.pipeLayer.pipes.length; i++) {
-            var pipe = this.pipeLayer.pipes[i];
-
-            if (!pipe.scored && pipe.getPositionX() + pipe.width / 2 < this.bird.getPositionX()) {
-                pipe.scored = true;
-                this.scoreLayer.incrementScore();
-                cc.audioEngine.playEffect(res.score_mp3, false);
             }
         }
     },
 
-// Pause
-    pauseGame: function(lost) {
 
+    endGame: function (){
+        this.bird.die();
+        this.pauseGame(true);
+    },
+
+    // Pause sẽ có 1 biến để xác nhận dừng khi chết hay dừng khi bấm nút dừng
+    pauseGame: function(lost) {
+        // nếu đã hiện pause menu thì không hiện nữa
         if(this.getChildByTag(1) !== null){
             return;
         }
 
+        // nếu dừng do thua thì sẽ không dừng game ngay mà cho chim rơi 1 lần
+        // dừng ống và bg và ground trước
         if(lost){
             this.unscheduleUpdate();
             this.pipeLayer.unscheduleUpdate();
         }
 
         setTimeout(() => {
-        // khi thua mới đổi vị trí score
-        if(lost) {
-            var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
-                if(this.scoreLayer.score / 2 > cc.sys.localStorage.getItem("bestScore")){
-                    cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score / 2);
+        // khi thua mới đổi vị trí score và có thể hiện một banner new bes score ở góc trên bên phải
+            if(lost) {
+                var newBestScoreBanner = ccui.Text("New\nBest Score", res.flappy_ttf, 14);
+                if(this.scoreLayer.score > cc.sys.localStorage.getItem("bestScore")){
+                    cc.sys.localStorage.setItem("bestScore", this.scoreLayer.score);
                     newBestScoreBanner.setRotation(45);
                     newBestScoreBanner.setPosition(WINDOW_X / 2 + 90, WINDOW_Y / 2 + 90)
                     this.addChild(newBestScoreBanner, 3);
@@ -228,18 +236,46 @@ var MaingameLayer = cc.Layer.extend({
                 else{
                     this.removeChild(newBestScoreBanner);
                 }
+
+                var medal;
+                if (this.scoreLayer.score >= BRONZE_GAP[0] && this.scoreLayer.score <= BRONZE_GAP[1]) {
+                    medal = new cc.Sprite(res.bronze_png);
+                } else if (this.scoreLayer.score >= SILVER_GAP[0] && this.scoreLayer.score <= SILVER_GAP[1]) {
+                    medal = new cc.Sprite(res.silver_png);
+                } else if (this.scoreLayer.score >= GOLD_GAP[0]) {
+                    medal = new cc.Sprite(res.gold_png);
+                }
+
+                // Nếu đạt huy chương thì thực hiện đặt huy chương vào
+                if (medal) {
+                    medal.setScale(MEDAL_SCALE);
+                    medal.setPosition(cc.p(WINDOW_X / 2, WINDOW_Y / 3 * 2 + 50))
+                    this.scoreLayer.addChild(medal)
+                }
+
+                // vị trí mới của score
                 this.scoreLayer.newPosition(WINDOW_X / 2, WINDOW_Y / 3 * 2)
             }
 
-            // pause thì dừng nhạc, dừng game,
-            // và hiện pause menu với giá trị lost thể hiện đã thua hay không
+            // game thực sự dừng
             cc.audioEngine.pauseMusic();
             cc.director.pause();
             var pauseLayer = new PauseLayer(lost);
             pauseLayer.setTag(1);
             this.addChild(pauseLayer, 4);
+        // nếu thua thì khoảng delay 1s trước khi hiện pause menu
         }, lost ? 1000 : 0)
 
+    },
+
+// Kiểm tra điểm
+    checkScore: function() {
+        var pipe = this.pipeLayer.pipes[this.pipeLayer.currentIndex];
+        if (!pipe.scored && pipe.getPositionX() + pipe.width < this.bird.getPositionX()) {
+            pipe.scored = true;
+            this.scoreLayer.incrementScore();
+            cc.audioEngine.playEffect(res.score_mp3, false);
+        }
     },
 
 // Countdowm
@@ -247,8 +283,8 @@ var MaingameLayer = cc.Layer.extend({
         this.countdown--;
         this.countdownLabel.setString(this.countdown.toString());
 
-        if (this.countdown <= 0 || this.bird.state !== "FLYING_STRAIGHT") {
-            if(this.bird.state === "FLYING_STRAIGHT") this.bird.state = "FALLING";
+        if (this.countdown <= 0 || this.bird.state !== state.FLYING_STRAIGHT) {
+            if(this.bird.state === state.FLYING_STRAIGHT) this.bird.state = state.FALLING;
             this.countdownLabel.setString("");
             this.unschedule(this.updateCountdown);
         }
@@ -257,21 +293,21 @@ var MaingameLayer = cc.Layer.extend({
 // Cooldown
     updateCooldown: function () {
 
-        this.bird.cooldown1 = Math.max(0, this.bird.cooldown1 - 1);
-        this.cooldownLabel.setString("Dash: " + (this.bird.cooldown1).toString() + "s");
-        if(this.bird.cooldown1 <= 0){
+        this.bird.cooldownSkill1 = Math.max(0, this.bird.cooldownSkill1 - 1);
+        this.cooldownLabel.setString("Dash: " + (this.bird.cooldownSkill1).toString() + "s");
+        if(this.bird.cooldownSkill1 <= 0){
             this.cooldownLabel.setString("Dash (press Q): OK");
             this.unschedule(this.updateCooldown);
         }
     },
 
-    updateCooldown2: function () {
+    updatecooldownSkill2: function () {
 
-        this.bird.cooldown2 = Math.max(0, this.bird.cooldown2 - 1);
-        this.cooldownLabel2.setString("Power: " + (this.bird.cooldown2).toString() + "s");
-        if(this.bird.cooldown2 <= 0){
+        this.bird.cooldownSkill2 = Math.max(0, this.bird.cooldownSkill2 - 1);
+        this.cooldownLabel2.setString("Power: " + (this.bird.cooldownSkill2).toString() + "s");
+        if(this.bird.cooldownSkill2 <= 0){
             this.cooldownLabel2.setString("Power (press E): OK");
-            this.unschedule(this.updateCooldown2);
+            this.unschedule(this.updatecooldownSkill2);
         }
     },
 
@@ -307,7 +343,8 @@ var MaingameLayer = cc.Layer.extend({
         this.checkCollisions();
         this.checkScore();
 
-        this.pipeLayer.middleGap = Math.min(this.scoreLayer.score / 10 * 5 + MIDDLE_GAP, 100 );
+        this.pipeLayer.middleGap = Math.min(this.scoreLayer.score / 10 * 5 + MIDDLE_GAP, 100);
+        this.pipeLayer.pipeSpeed = Math.min((this.scoreLayer.score / 100 + 1), 2) * this.speed;
 
         this.backgroundSprite1.x -= this.speed / 2 * dt;
         this.backgroundSprite2.x -= this.speed / 2 * dt;
